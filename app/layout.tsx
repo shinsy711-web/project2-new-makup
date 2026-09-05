@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileCtaBar from '@/components/MobileCtaBar';
 import {
-  SITE_NAME, SITE_SHORT, SITE_URL, OG_IMAGE, GA_ID, NAVER_VERIFICATION,
+  SITE_NAME, SITE_SHORT, SITE_URL, OG_IMAGE, GA_ID, NAVER_VERIFICATION, ADSENSE_PUB,
   OPERATOR, getPage, PAGES,
 } from '@/lib/site';
 
@@ -49,6 +49,7 @@ export const metadata: Metadata = {
   },
   ...(NAVER_VERIFICATION ? { verification: { other: { 'naver-site-verification': NAVER_VERIFICATION } } } : {}),
   other: {
+    'google-adsense-account': ADSENSE_PUB,
     NaverBot: 'all',
     Yeti: 'all',
     googlebot: 'all',

@@ -25,7 +25,11 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://makeuphagw
  */
 export const OG_IMAGE = `${SITE_URL}/og.jpg`;
 export const GA_ID = process.env.NEXT_PUBLIC_GA_ID || '';
-export const NAVER_VERIFICATION = process.env.NEXT_PUBLIC_NAVER_VERIFICATION || '';
+/** 구글 애드센스 퍼블리셔 ID — 사이트 소유 확인용 메타 태그에 사용 */
+export const ADSENSE_PUB = 'ca-pub-5378247298190063';
+/** 네이버 서치어드바이저 사이트 소유확인 코드 (환경변수로 덮어쓸 수 있음) */
+export const NAVER_VERIFICATION =
+  process.env.NEXT_PUBLIC_NAVER_VERIFICATION || '53b3ef529aa5c9054534cb9695c2641a371dcdc3';
 
 export const UPDATED = '2026-09-05';
 

@@ -42,6 +42,11 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   robots: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
   formatDetection: { telephone: false, date: false, address: false, email: false },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
   ...(NAVER_VERIFICATION ? { verification: { other: { 'naver-site-verification': NAVER_VERIFICATION } } } : {}),
   other: {
     NaverBot: 'all',
@@ -80,6 +85,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         alternateName: SITE_NAME,
         url: `${SITE_URL}/`,
         description: '메이크업학원 수강료, 커리큘럼, 자격증, 국비지원 정보를 비교 제공하고 상담을 연결하는 정보 사이트입니다.',
+        logo: {
+          '@type': 'ImageObject',
+          '@id': `${SITE_URL}/#logo`,
+          url: `${SITE_URL}/logo.png`,
+          width: 256,
+          height: 256,
+          caption: SITE_NAME,
+        },
+        image: { '@id': `${SITE_URL}/#logo` },
         contactPoint: {
           '@type': 'ContactPoint',
           email: OPERATOR.email,

@@ -20,7 +20,11 @@ export const metadata: Metadata = {
   },
   description: DESC,
   metadataBase: new URL(SITE_URL),
-  alternates: { canonical: '/' },
+  // RSS는 네이버 수집 경로라 <link rel="alternate">로 발견 가능하게 해둔다.
+  alternates: {
+    canonical: '/',
+    types: { 'application/rss+xml': '/rss.xml' },
+  },
   keywords: Array.from(new Set(PAGES.flatMap((p) => p.keywords))).slice(0, 40),
   openGraph: {
     title: TITLE,

@@ -73,7 +73,7 @@ export default function PrivacyPolicyContent() {
       </Section>
 
       <Section title="제8조 (광고성 정보의 전송)">
-        회사 및 제휴 상담처는 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조에 따라, 수신 동의를 하신 이용자에 한하여 영리 목적의 광고성 정보를 전송합니다.<br /><br />
+        회사 및 올댓뷰티 상담사는 정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조에 따라, 수신 동의를 하신 이용자에 한하여 영리 목적의 광고성 정보를 전송합니다.<br /><br />
         <b>전송자:</b> {OPERATOR.adSender}<br />
         <b>전송 방법:</b> {OPERATOR.adChannels}<br />
         <b>전송 내용:</b> {OPERATOR.adContents}<br /><br />

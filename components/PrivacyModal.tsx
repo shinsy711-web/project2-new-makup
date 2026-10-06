@@ -17,7 +17,7 @@ type Props = {
 /**
  * 폼 제출 시 뜨는 개인정보 동의 모달.
  *   [필수] ① 수집·이용  ② 제3자 제공  ③ (만 14세 미만) 법정대리인 동의
- *   [선택] ④ 광고성 정보 수신 (정보통신망법 제50조 — 제휴 상담처의 전화·문자 발신 근거)
+ *   [선택] ④ 광고성 정보 수신 (정보통신망법 제50조 — 올댓뷰티 상담사의 전화·문자 발신 근거)
  * 흐름: 신청 버튼 → 입력검증 → 이 모달 → "동의하고 신청" → onConfirm(전송) → onClose
  */
 export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Props) {
@@ -213,7 +213,7 @@ function ContentBox({ checked, onChange, label, primary, optional = false, child
         </span>
       </button>
       <div style={{ padding: "12px 16px", borderTop: "1px solid #f4f4f5" }}>
-        {/* 제3자 제공처가 복수라는 고지가 스크롤 없이도 보이도록 높이를 확보한다 */}
+        {/* 제3자 제공받는 자 고지가 스크롤 없이도 보이도록 높이를 확보한다 */}
         <div style={{ height: 108, overflowY: "auto", fontSize: 12, color: "#71717a", lineHeight: 1.8 }}>
           {children}
         </div>

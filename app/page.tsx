@@ -121,7 +121,7 @@ export default function HomePage() {
       <div className="container" style={{ paddingTop: 76 }}>
 
         {/* ══ 서비스 정의 — 히어로 바로 아래. 이 사이트가 뭐하는 곳인지 먼저 밝힌다.
-             수익 구조(제휴 상담처 연결)를 여기서 공개해 두면 폼의 제3자 제공 동의와
+             수익 구조(올댓뷰티 상담사 연결)를 여기서 공개해 두면 폼의 제3자 제공 동의와
              맥락이 이어지고, 신뢰·E-E-A-T 측면에서도 유리하다. ══ */}
         <section className="section" aria-labelledby="about-title">
           <p className="eyebrow">서비스 소개</p>
@@ -163,8 +163,8 @@ export default function HomePage() {
               그럼 이 서비스는 어떻게 운영되나요?
             </p>
             <p style={{ fontSize: 14.5, color: 'var(--text-secondary)', lineHeight: 1.85, margin: 0 }}>
-              이용자에게는 어떤 비용도 받지 않습니다. 상담을 신청하시면 조건에 맞는 <strong style={{ color: 'var(--text-primary)' }}>제휴 상담처(메이크업·뷰티 교육기관)</strong>에
-              연결해 드리고, 저희는 그 과정에서 수익을 얻습니다. 그래서 연결하기 전에 <strong style={{ color: 'var(--text-primary)' }}>어느 곳으로 연결되는지 먼저 알려드리고</strong>,
+              이용자에게는 어떤 비용도 받지 않습니다. 상담을 신청하시면 <strong style={{ color: 'var(--text-primary)' }}>올댓뷰티 상담사</strong>에게
+              연결해 드리고, 저희는 그 과정에서 수익을 얻습니다. 그래서 연결하기 전에 <strong style={{ color: 'var(--text-primary)' }}>어디로 정보가 제공되는지 먼저 알려드리고</strong>,
               원하지 않으시면 제공하지 않습니다. 자세한 내용은{' '}
               <Link href="/privacy-policy/" style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'underline' }}>개인정보처리방침</Link>에서 확인하실 수 있습니다.
             </p>

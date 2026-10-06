@@ -26,7 +26,7 @@ export default function Footer() {
             </p>
             <address style={{ fontStyle: 'normal', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.9 }}>
               운영: {OPERATOR.company}<br />
-              상담 연결: 제휴 상담처(메이크업·뷰티 교육기관)<br />
+              상담 연결: 올댓뷰티 상담사<br />
               문의: <a href={`mailto:${OPERATOR.email}`} style={{ textDecoration: 'underline' }}>{OPERATOR.email}</a><br />
               상담 시간: {OPERATOR.hours}
             </address>

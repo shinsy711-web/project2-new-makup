@@ -3,7 +3,7 @@ import Script from 'next/script';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobileCtaBar from '@/components/MobileCtaBar';
+import BottomForm from '@/components/BottomForm';
 import {
   SITE_NAME, SITE_SHORT, SITE_URL, OG_IMAGE, GA_ID, NAVER_VERIFICATION, ADSENSE_PUB,
   OPERATOR, getPage, PAGES,
@@ -173,7 +173,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         {children}
         <Footer />
-        <MobileCtaBar />
+        {/* 하단 고정 바텀폼 — 모바일·PC 공통. 같은 자리를 쓰던 MobileCtaBar 는 마운트하지 않는다 */}
+        <BottomForm />
       </body>
     </html>
   );

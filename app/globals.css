@@ -173,12 +173,15 @@ img { max-width: 100%; display: block; }
 
 /* ── 하단 고정 바텀폼 (components/BottomForm.tsx) ──────────────
    모바일·PC 공통으로 화면 맨 아래에 붙는다.
+   본문 폼(FormSection)이 받는 항목을 전부 받으므로, 좁은 화면에서는 2열 격자로
+   접고 900px 이상에서는 한 줄로 펴서 높이를 줄인다.
+   모든 칸에 min-width:0 을 주어 어떤 폭에서도 가로 스크롤이 생기지 않는다.
    z-index 45 — 헤더(sticky 50) · 네비 드롭다운(60) · 동의 모달(999) ·
    법률 모달(9999) 보다 아래라 어떤 오버레이도 덮지 않는다.
    본문 마지막 내용이 가려지지 않게 body 하단에 바 높이만큼 여백을 둔다.
    --bottom-form-h 는 BottomForm 이 실제 높이로 덮어쓰고,
    아래 fallback 값은 하이드레이션 전 첫 페인트에만 쓰인다. */
-body { padding-bottom: var(--bottom-form-h, 140px); }
+body { padding-bottom: var(--bottom-form-h, 206px); }
 
 .bottom-form {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 45;
@@ -186,47 +189,100 @@ body { padding-bottom: var(--bottom-form-h, 140px); }
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border-top: 1px solid var(--border-color);
   box-shadow: 0 -6px 24px rgba(36,26,43,0.08);
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 9px 12px calc(9px + env(safe-area-inset-bottom, 0px));
 }
 
-/* 좁은 화면(기본)에서는 동의 줄 / 입력 줄로 접히고, 넓어지면 한 줄로 펴진다 */
 .bottom-form__inner {
   max-width: 1120px; margin: 0 auto;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  display: flex; flex-direction: column; gap: 6px;
 }
-.bottom-form__consent {
-  flex: 1 1 100%; min-width: 0;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
-}
-.bottom-form__fields { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; gap: 8px; }
 
-.bottom-form__agree { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.bottom-form__agree-text { font-size: 13px; font-weight: 800; color: var(--text-primary); }
-.bottom-form__cb { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.bottom-form__cbbox {
-  width: 20px; height: 20px; border-radius: 6px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg-card); border: 2px solid var(--border-color);
-  transition: background 0.2s, border-color 0.2s;
+/* 입력 줄 — 기본(모바일)은 2열 격자, 900px 이상은 한 줄 */
+.bottom-form__grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px; align-items: center;
 }
-.bottom-form__cb:checked + .bottom-form__cbbox { background: var(--primary); border-color: var(--primary); }
-.bottom-form__cb:focus-visible + .bottom-form__cbbox { outline: 2px solid var(--primary); outline-offset: 2px; }
+.bottom-form__cell { min-width: 0; }
 
-.bottom-form__items { font-size: 11.5px; color: var(--text-muted); line-height: 1.55; margin: 0; }
+/* 입력 상자 — 본문 폼과 같은 토큰(테두리·반경·포커스 그림자) */
+.bottom-form__box {
+  display: flex; align-items: center; gap: 6px; min-width: 0; height: 40px;
+  background: var(--bg-card); border: 1.5px solid var(--border-color);
+  border-radius: 12px; padding: 0 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.bottom-form__box:focus-within { border-color: var(--primary); box-shadow: 0 4px 16px rgba(168,58,98,0.12); }
+.bottom-form__box--sel { position: relative; }
+.bottom-form__box--prefix { flex: 0 0 62px; padding: 0 8px; }
+.bottom-form__phonewrap { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bottom-form__phonewrap .bottom-form__box--num { flex: 1 1 auto; }
+
+.bottom-form__input, .bottom-form__select {
+  flex: 1 1 auto; min-width: 0; width: 100%; height: 100%;
+  background: transparent; border: none; outline: none;
+  font-family: inherit; font-size: 15px; font-weight: 500; color: var(--text-primary);
+}
+.bottom-form__input::placeholder { color: var(--text-muted); font-weight: 400; }
+.bottom-form__select { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 12px; }
+.bottom-form__select--empty { color: var(--text-muted); }
+.bottom-form__caret { position: absolute; right: 9px; pointer-events: none; color: var(--text-muted); font-size: 9px; }
+
+/* 성별 — 본문 폼과 같은 원형 토글 */
+.bottom-form__sex {
+  display: flex; gap: 3px; flex-shrink: 0;
+  padding-left: 7px; border-left: 1px solid var(--border-color);
+}
+.bottom-form__sexbtn {
+  width: 26px; height: 26px; border-radius: 50%; border: none; cursor: pointer;
+  font-family: inherit; font-weight: 900; font-size: 11px;
+  background: var(--bg-main); color: var(--text-muted);
+  transition: background 0.2s, color 0.2s;
+}
+.bottom-form__sexbtn[aria-pressed="true"] { background: var(--primary); color: #fff; }
+
+/* 자격증 보유 여부 — 본문 폼과 같은 스위치 */
+.bottom-form__boxlabel {
+  flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 700;
+  color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bottom-form__switch {
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
+}
+.bottom-form__switch-text { font-size: 12px; font-weight: 700; width: 26px; text-align: right; color: var(--text-muted); transition: color 0.2s; }
+.bottom-form__switch[aria-pressed="true"] .bottom-form__switch-text { color: var(--primary); }
+.bottom-form__track { position: relative; display: block; width: 38px; height: 21px; border-radius: 11px; background: var(--border-color); transition: background 0.3s; }
+.bottom-form__switch[aria-pressed="true"] .bottom-form__track { background: var(--primary); }
+.bottom-form__knob {
+  position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); display: block; transition: transform 0.3s ease;
+}
+.bottom-form__switch[aria-pressed="true"] .bottom-form__knob { transform: translateX(17px); }
+
+.bottom-form__submit { width: 100%; height: 40px; padding: 0 12px; font-size: 14px; border-radius: 12px; white-space: nowrap; }
+
+/* 만 14세 미만 보호자 정보 — 본문 폼과 같은 조건에서만 나타난다 */
+.bottom-form__guardian {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px; align-items: center;
+}
+.bottom-form__guardian-note {
+  grid-column: 1 / -1; margin: 0;
+  font-size: 11.5px; font-weight: 700; color: var(--primary); line-height: 1.5;
+}
+/* 보호자 줄이 2열을 모두 쓰므로, 그 앞뒤 칸도 한 줄씩 차지해 빈 칸이 남지 않게 한다 */
+.bottom-form__grid--minor .bottom-form__cell--license,
+.bottom-form__grid--minor .bottom-form__cell--submit { grid-column: 1 / -1; }
+
+.bottom-form__note { margin: 0; font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
 .bottom-form__detail { color: var(--text-secondary); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 .bottom-form__detail:hover { color: var(--primary); }
+.bottom-form__status { margin: 0; font-size: 12px; font-weight: 700; }
 
-.bottom-form__phone {
-  flex: 1 1 auto; min-width: 0; width: 100%;
-  background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 14px;
-  padding: 11px 16px; font-size: 15px; font-weight: 500; color: var(--text-primary);
-  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-}
-.bottom-form__phone::placeholder { color: var(--text-muted); font-weight: 400; }
-.bottom-form__phone:focus { border-color: var(--primary); box-shadow: 0 4px 20px rgba(168,58,98,0.12); }
-
-.bottom-form__submit { flex: 0 0 auto; padding: 12px 18px; font-size: 14px; border-radius: 14px; white-space: nowrap; }
-.bottom-form__status { flex: 1 1 100%; margin: 0; font-size: 12px; font-weight: 700; }
+.bottom-form__done { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; }
+.bottom-form__done-text { font-size: 13.5px; font-weight: 800; color: var(--text-primary); }
+.bottom-form__reset { height: 36px; padding: 0 16px; font-size: 13px; border-radius: 12px; }
 
 .bottom-form__sr {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -234,10 +290,20 @@ body { padding-bottom: var(--bottom-form-h, 140px); }
 }
 
 @media (min-width: 900px) {
-  body { padding-bottom: var(--bottom-form-h, 96px); }
-  .bottom-form { padding: 12px 24px; }
-  .bottom-form__consent { flex: 1 1 auto; }
-  .bottom-form__fields { flex: 0 0 auto; }
-  .bottom-form__phone { flex: 0 0 230px; width: 230px; }
-  .bottom-form__submit { padding: 13px 26px; font-size: 15px; }
+  body { padding-bottom: var(--bottom-form-h, 100px); }
+  .bottom-form { padding: 11px 24px; }
+  /* 한 줄 배치 — 기준폭 합(약 908px + 간격 40px)이라 1024px 노트북에서도 한 줄이다.
+     (900~1023px 에서는 제출 버튼만 둘째 줄로 내려가고, 넘침은 생기지 않는다) */
+  .bottom-form__grid { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .bottom-form__cell--name { flex: 1 1 180px; }
+  .bottom-form__cell--birth { flex: 0 1 126px; }
+  .bottom-form__cell--phone { flex: 1 1 200px; }
+  .bottom-form__cell--region { flex: 0 1 118px; }
+  .bottom-form__cell--license { flex: 0 1 150px; }
+  .bottom-form__cell--submit { flex: 0 0 auto; }
+  .bottom-form__submit { width: auto; padding: 0 22px; font-size: 15px; }
+  /* 보호자 줄만 둘째 줄로 내린다 */
+  .bottom-form__guardian { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .bottom-form__guardian-note { flex: 0 1 auto; }
+  .bottom-form__guardian .bottom-form__cell { flex: 0 1 200px; }
 }

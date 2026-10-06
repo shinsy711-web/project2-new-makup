@@ -3,40 +3,66 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { parsePhone } from '@/lib/validate';
+import PrivacyModal, { type ConsentResult } from './PrivacyModal';
+import { validateForm, parsePhone, isUnder14, SPECIAL_CHAR_REG } from '@/lib/validate';
+import { REGIONS } from '@/data/constants';
 import { CONSENT_VERSION } from '@/lib/site';
 
 type Status = 'idle' | 'sending' | 'done' | 'error';
 
 /**
+ * 입력 초기값 — 본문 폼(FormSection)의 initial 과 키·기본값이 같다.
+ * 지역 기본값만 본문 폼의 defaultRegion(지역 페이지 전용)이 없어 빈 값으로 둔다.
+ */
+const INITIAL = {
+  customer_name: '',
+  customer_birth: '',
+  mobile1: '010',
+  mobile2: '',
+  customer_sex: '2',
+  region: '',
+  has_license: 'N',
+  guardian_name: '',
+  guardian_phone: '',
+};
+
+/**
  * ★ 화면 하단 고정 바텀폼 — app/layout.tsx 에서 전역 마운트되어 모든 페이지에 노출된다.
  *
- * 긴 폼(FormSection)까지 스크롤하지 않은 이탈 직전 방문자를 번호 한 줄로 받는 용도다.
- * 전송 경로·필드 이름·환경변수는 FormSection 과 완전히 동일하게 맞춘다.
+ * 받는 항목은 본문 폼(components/FormSection.tsx)과 1:1 로 같다.
+ *   성함 · 성별 · 생년월일 · 연락처(앞자리+번호) · 희망 지역 · 자격증 보유 여부
+ *   (+ 만 14세 미만일 때만 보호자 성함 · 보호자 연락처)
+ * 본문 폼에 없는 항목은 만들지 않고, 사용자가 입력하지 않은 값을 빈 문자열로
+ * 채워 보내지도 않는다. 모든 칸은 접지 않고 처음부터 화면에 보인다.
+ *
+ * 검증은 본문 폼과 같은 함수를 그대로 쓴다 (validateForm · parsePhone · isUnder14).
+ * 만 14세 미만 판정도 본문 폼과 같이 생년월일(isUnder14)로 하며, 보호자 정보와
+ * 법정대리인 동의(PrivacyModal isMinor)를 같은 조건에서 받는다.
+ * 안내 문구만 alert 대신 바 안의 상태 영역(aria-live="polite")에 띄운다.
+ *
+ * 전송 경로·필드 이름·환경변수는 본문 폼과 완전히 동일하다.
  *   POST ${NEXT_PUBLIC_DB_SUBMIT_URL}?api_key=${NEXT_PUBLIC_DB_API_KEY}
- * 번호만 받으므로 성함·생년월일·성별·지역·자격증 필드는 빈 문자열로 보낸다.
- * (어느 페이지에서 들어왔는지는 FormSection 과 같이 source_page 로 남긴다)
+ * source_page 만 어느 쪽에서 들어온 리드인지 DB 에서 갈리도록
+ * 'bottom-form' + 경로 로 남긴다 (project29 와 같은 규칙).
  *
- * 동의 구성은 FormSection → PrivacyModal 의 필수 항목과 같다.
- *   [필수] 개인정보 수집 및 이용 동의 / 개인정보 제3자 제공 동의 / 만 14세 이상 확인
- * 생년월일을 받지 않아 만 14세 미만을 판정할 수 없으므로, 법정대리인 동의 대신
- * '만 14세 이상 확인'을 필수로 받는다. 미만 이용자는 본문 폼(FormSection)으로 보내
- * 보호자 정보를 받는다. 선택 항목(광고성 정보 수신)은 받지 않으므로 false 로 보낸다.
- *
- * 레이아웃은 globals.css 의 .bottom-form* 규칙이 담당한다 (z-index 45, body 하단 여백).
+ * 레이아웃은 globals.css 의 .bottom-form* 규칙이 담당한다
+ * (z-index 45, 모바일 2열 격자 / 900px 이상 한 줄, body 하단 여백).
  */
 export default function BottomForm() {
   const pathname = usePathname();
   const barRef = useRef<HTMLDivElement>(null);
-  const [phone, setPhone] = useState('');
-  const [agreed, setAgreed] = useState(false);
+  const [form, setForm] = useState(INITIAL);
+  const [showModal, setShowModal] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
 
+  const minor = isUnder14(form.customer_birth);
+  const sending = status === 'sending';
+
   /**
    * 바가 본문 마지막 내용을 가리지 않도록 실제 바 높이를 body 하단 여백으로 돌려준다.
-   * 좁은 화면에서 두 줄로 접히거나 상태 문구가 늘면 높이가 바뀌므로 ResizeObserver 로 추적한다.
-   * (하이드레이션 전에는 globals.css 의 fallback 값이 쓰인다)
+   * 화면 폭에 따라 줄 수가 바뀌고 보호자 줄·상태 문구가 늘면 높이가 변하므로
+   * ResizeObserver 로 추적한다. (하이드레이션 전에는 globals.css 의 fallback 값이 쓰인다)
    */
   useEffect(() => {
     const el = barRef.current;
@@ -60,43 +86,76 @@ export default function BottomForm() {
     setMessage(msg);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  /** 입력이 바뀌면 직전 안내 문구를 지운다 (전송 중에는 건드리지 않는다) */
+  const set = (key: keyof typeof INITIAL, value: string) => {
+    setForm((p) => ({ ...p, [key]: value }));
+    if (status !== 'sending') {
+      setStatus('idle');
+      setMessage('');
+    }
+  };
+
+  /** 본문 폼과 같은 특수문자 규칙 — 입력된 문자를 되돌리고 안내한다 */
+  const handleNameChange = (value: string) => {
+    if (SPECIAL_CHAR_REG.test(value)) {
+      setForm((p) => ({ ...p, customer_name: value.slice(0, -1) }));
+      fail('이름에 특수문자는 입력하실 수 없습니다.');
+      return;
+    }
+    set('customer_name', value);
+  };
+
+  /** 본문 폼 handleSubmitClick 과 같은 순서·같은 규칙으로 검증한 뒤 동의 모달을 띄운다 */
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (status === 'sending') return;
+    if (sending) return;
 
-    if (!phone) { fail('휴대폰 번호를 입력해 주세요.'); return; }
-    // FormSection 과 같은 검증 함수를 쓴다. 앞자리 선택이 없으므로 기본값 '010' 을 넘기고,
-    // 11자리(01012345678)로 입력하면 parsePhone 이 앞 3자리를 떼어 mobile1 으로 잡는다.
-    const parsed = parsePhone('010', phone);
+    const error = validateForm({ ...form, privacy: true });
+    if (error) { fail(error); return; }
+    if (!form.region) { fail('희망 지역을 선택해 주세요.'); return; }
+    if (minor && !form.guardian_name) { fail('만 14세 미만은 보호자 성함을 입력해 주세요.'); return; }
+    if (minor && !/^\d{10,11}$/.test(form.guardian_phone)) { fail('만 14세 미만은 보호자 연락처(숫자만)를 입력해 주세요.'); return; }
+    // 번호 형식(앞자리 조합)도 동의를 받기 전에 미리 걸러 둔다 — 규칙은 본문 폼과 같다
+    const parsed = parsePhone(form.mobile1, form.mobile2);
     if (typeof parsed === 'string') { fail(parsed); return; }
-    if (!agreed) { fail('필수 동의 항목에 동의해 주세요.'); return; }
 
-    const url = process.env.NEXT_PUBLIC_DB_SUBMIT_URL;
-    const key = process.env.NEXT_PUBLIC_DB_API_KEY;
-    if (!url || !key) { fail('전송 설정이 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.'); return; }
+    setStatus('idle');
+    setMessage('');
+    setShowModal(true);
+  };
+
+  const handleConfirm = async (consent: ConsentResult) => {
+    const parsed = parsePhone(form.mobile1, form.mobile2);
+    if (typeof parsed === 'string') { fail(parsed); return; }
 
     const payload = {
-      customer_name: '',
-      customer_birth: '',
+      customer_name: form.customer_name,
+      customer_birth: form.customer_birth,
       mobile1: parsed.mobile1,
       mobile2: parsed.mobile2,
       mobile3: '',
-      customer_sex: '',
-      region: '',
-      // FormSection 은 토글 기본값으로 항상 'N'/'Y' 중 하나를 보낸다.
-      // 바텀폼은 자격증을 묻지 않으므로 같은 기본값('N')을 보내 수신 서버가 같은 값 집합만 받게 한다.
-      has_license: 'N',
+      customer_sex: form.customer_sex,
+      region: form.region,
+      has_license: form.has_license,
       category: '메이크업학원',
       // 본문 폼과 구분해야 어느 쪽에서 들어온 리드인지 DB 에서 갈린다 (project29 와 같은 규칙)
       source_page: `bottom-form${pathname || '/'}`,
 
-      // ── 동의 이력 ── FormSection 과 같은 키·같은 버전으로 남긴다
-      consent_privacy: true,
-      consent_third_party: true,
-      consent_marketing: false,
+      // ── 동의 이력 ── 본문 폼과 같은 키·같은 버전으로 남긴다
+      consent_privacy: true,                 // [필수] 수집·이용
+      consent_third_party: true,             // [필수] 제3자 제공
+      consent_marketing: consent.marketing,  // [선택] 광고성 정보 수신
       consent_at: new Date().toISOString(),
       consent_version: CONSENT_VERSION,
+
+      ...(minor
+        ? { guardian_name: form.guardian_name, guardian_phone: form.guardian_phone, consent_guardian: true }
+        : {}),
     };
+
+    const url = process.env.NEXT_PUBLIC_DB_SUBMIT_URL;
+    const key = process.env.NEXT_PUBLIC_DB_API_KEY;
+    if (!url || !key) { fail('전송 설정이 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.'); return; }
 
     setStatus('sending');
     setMessage('전송 중입니다...');
@@ -111,8 +170,7 @@ export default function BottomForm() {
         fail(`전송 실패: ${(err as { error?: string }).error ?? res.status}`);
         return;
       }
-      setPhone('');
-      setAgreed(false);
+      setForm({ ...INITIAL });
       setStatus('done');
       setMessage('상담 신청이 접수되었습니다. 영업일 기준 1일 이내에 연락드리겠습니다.');
     } catch {
@@ -120,70 +178,211 @@ export default function BottomForm() {
     }
   };
 
-  const sending = status === 'sending';
   const statusColor =
     status === 'error' ? '#B45309' : status === 'done' ? 'var(--success)' : 'var(--text-secondary)';
 
   return (
     <div className="bottom-form" ref={barRef}>
-      <form className="bottom-form__inner" onSubmit={handleSubmit} aria-label="빠른 상담 신청" noValidate>
+      {showModal && (
+        <PrivacyModal onConfirm={handleConfirm} onClose={() => setShowModal(false)} isMinor={minor} />
+      )}
 
-        {/* 필수 동의 — 항목 이름은 PrivacyModal 의 문구를 그대로 쓰고, 상세는 처리방침으로 연결한다 */}
-        <div className="bottom-form__consent">
-          <label className="bottom-form__agree" htmlFor="bottom-form-agree">
-            <input
-              id="bottom-form-agree"
-              className="bottom-form__cb"
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => {
-                setAgreed(e.target.checked);
-                if (status !== 'sending') { setStatus('idle'); setMessage(''); }
-              }}
-            />
-            <span className="bottom-form__cbbox" aria-hidden="true">
-              {agreed && (
-                <svg width="11" height="9" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </span>
-            <span className="bottom-form__agree-text">
-              모두 동의 <span style={{ color: 'var(--primary)' }}>(필수)</span>
-            </span>
-          </label>
-          <p className="bottom-form__items">
-            개인정보 수집 및 이용 동의 · 개인정보 제3자 제공 동의 · 만 14세 이상 확인{' '}
+      <div className="bottom-form__inner">
+        {status === 'done' ? (
+          <div className="bottom-form__done">
+            <p className="bottom-form__done-text">상담 신청이 접수되었습니다</p>
+            <button
+              type="button"
+              className="btn btn--ghost bottom-form__reset"
+              onClick={() => { setStatus('idle'); setMessage(''); }}
+            >
+              다른 조건으로 다시 신청하기
+            </button>
+          </div>
+        ) : (
+          <form
+            className={`bottom-form__grid${minor ? ' bottom-form__grid--minor' : ''}`}
+            onSubmit={handleSubmit}
+            aria-label="메이크업학원 빠른 상담 신청"
+            noValidate
+          >
+
+            {/* 성함 · 성별 */}
+            <div className="bottom-form__cell bottom-form__cell--name">
+              <label htmlFor="bf-name" className="bottom-form__sr">성함</label>
+              <div className="bottom-form__box">
+                <input
+                  id="bf-name"
+                  className="bottom-form__input"
+                  type="text"
+                  value={form.customer_name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  maxLength={8}
+                  placeholder="성함"
+                  autoComplete="name"
+                />
+                <span className="bottom-form__sex" role="group" aria-label="성별">
+                  {[{ label: '남', val: '1' }, { label: '여', val: '2' }].map(({ label, val }) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className="bottom-form__sexbtn"
+                      onClick={() => set('customer_sex', val)}
+                      aria-pressed={form.customer_sex === val}
+                      aria-label={`성별 ${label}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </span>
+              </div>
+            </div>
+
+            {/* 생년월일 — 만 14세 미만 판정 기준 (본문 폼과 같은 isUnder14) */}
+            <div className="bottom-form__cell bottom-form__cell--birth">
+              <label htmlFor="bf-birth" className="bottom-form__sr">생년월일 6자리</label>
+              <div className="bottom-form__box">
+                <input
+                  id="bf-birth"
+                  className="bottom-form__input"
+                  type="text"
+                  inputMode="numeric"
+                  value={form.customer_birth}
+                  onChange={(e) => set('customer_birth', e.target.value.replace(/\D/g, ''))}
+                  maxLength={6}
+                  placeholder="생년월일 6자리"
+                  autoComplete="bday"
+                />
+              </div>
+            </div>
+
+            {/* 연락처 — 앞자리 선택 + 번호 (본문 폼과 같은 목록·같은 parsePhone 규칙) */}
+            <div className="bottom-form__cell bottom-form__cell--phone">
+              <div className="bottom-form__phonewrap">
+                <div className="bottom-form__box bottom-form__box--sel bottom-form__box--prefix">
+                  <label htmlFor="bf-mobile1" className="bottom-form__sr">전화번호 앞자리</label>
+                  <select
+                    id="bf-mobile1"
+                    className="bottom-form__select"
+                    value={form.mobile1}
+                    onChange={(e) => set('mobile1', e.target.value)}
+                  >
+                    {['010', '011', '016', '017', '019'].map((v) => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                  <span className="bottom-form__caret" aria-hidden="true">▼</span>
+                </div>
+                <div className="bottom-form__box bottom-form__box--num">
+                  <label htmlFor="bf-mobile2" className="bottom-form__sr">전화번호</label>
+                  <input
+                    id="bf-mobile2"
+                    className="bottom-form__input"
+                    type="tel"
+                    inputMode="numeric"
+                    value={form.mobile2}
+                    onChange={(e) => set('mobile2', e.target.value.replace(/\D/g, ''))}
+                    maxLength={11}
+                    placeholder="번호 입력"
+                    autoComplete="tel-national"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 희망 지역 — 본문 폼과 같은 데이터 소스(data/constants REGIONS) */}
+            <div className="bottom-form__cell bottom-form__cell--region">
+              <label htmlFor="bf-region" className="bottom-form__sr">희망 지역</label>
+              <div className="bottom-form__box bottom-form__box--sel">
+                <select
+                  id="bf-region"
+                  className={`bottom-form__select${form.region ? '' : ' bottom-form__select--empty'}`}
+                  value={form.region}
+                  onChange={(e) => set('region', e.target.value)}
+                >
+                  <option value="" disabled hidden>지역 선택</option>
+                  {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <span className="bottom-form__caret" aria-hidden="true">▼</span>
+              </div>
+            </div>
+
+            {/* 자격증 보유 여부 — 본문 폼과 같은 'Y' / 'N' 값 */}
+            <div className="bottom-form__cell bottom-form__cell--license">
+              <div className="bottom-form__box">
+                <span className="bottom-form__boxlabel" aria-hidden="true">자격증</span>
+                <button
+                  type="button"
+                  className="bottom-form__switch"
+                  onClick={() => set('has_license', form.has_license === 'Y' ? 'N' : 'Y')}
+                  aria-pressed={form.has_license === 'Y'}
+                  aria-label="미용사(메이크업) 자격증 보유 여부"
+                >
+                  <span className="bottom-form__switch-text">{form.has_license === 'Y' ? '보유' : '없음'}</span>
+                  <span className="bottom-form__track" aria-hidden="true">
+                    <span className="bottom-form__knob" />
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* 만 14세 미만 보호자 정보 — 본문 폼과 같은 조건에서만 나타난다 */}
+            {minor && (
+              <div className="bottom-form__guardian">
+                <p className="bottom-form__guardian-note">
+                  만 14세 미만으로 확인됩니다 — 보호자(법정대리인) 정보를 함께 입력해 주세요.
+                </p>
+                <div className="bottom-form__cell">
+                  <label htmlFor="bf-gname" className="bottom-form__sr">보호자 성함</label>
+                  <div className="bottom-form__box">
+                    <input
+                      id="bf-gname"
+                      className="bottom-form__input"
+                      type="text"
+                      value={form.guardian_name}
+                      onChange={(e) => set('guardian_name', e.target.value)}
+                      maxLength={8}
+                      placeholder="보호자 성함"
+                    />
+                  </div>
+                </div>
+                <div className="bottom-form__cell">
+                  <label htmlFor="bf-gphone" className="bottom-form__sr">보호자 연락처</label>
+                  <div className="bottom-form__box">
+                    <input
+                      id="bf-gphone"
+                      className="bottom-form__input"
+                      type="tel"
+                      inputMode="numeric"
+                      value={form.guardian_phone}
+                      onChange={(e) => set('guardian_phone', e.target.value.replace(/\D/g, ''))}
+                      maxLength={11}
+                      placeholder="보호자 연락처"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 제출 — 본문 폼과 같이 동의 모달을 거쳐 전송된다 */}
+            <div className="bottom-form__cell bottom-form__cell--submit">
+              <button
+                type="submit"
+                className="btn btn--primary bottom-form__submit"
+                disabled={sending}
+                style={{ opacity: sending ? 0.6 : 1, cursor: sending ? 'not-allowed' : 'pointer' }}
+              >
+                {sending ? '전송 중...' : '무료 상담 신청'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {status !== 'done' && (
+          <p className="bottom-form__note">
+            {/* 375px 에서 한 줄에 들어가는 길이로 유지한다 — 두 줄이 되면 바가 17px 높아진다 */}
+            신청 시 개인정보 동의 창이 열립니다 · 100% 무료{' '}
             <Link href="/privacy-policy/" className="bottom-form__detail">전문 보기</Link>
           </p>
-        </div>
-
-        {/* 휴대폰 번호 + 전송 */}
-        <div className="bottom-form__fields">
-          <label htmlFor="bottom-form-phone" className="bottom-form__sr">휴대폰 번호</label>
-          <input
-            id="bottom-form-phone"
-            className="bottom-form__phone"
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel-national"
-            maxLength={11}
-            placeholder="휴대폰 번호 ('-' 없이 입력)"
-            value={phone}
-            onChange={(e) => {
-              setPhone(e.target.value.replace(/\D/g, ''));
-              if (status !== 'sending') { setStatus('idle'); setMessage(''); }
-            }}
-          />
-          <button
-            type="submit"
-            className="btn btn--primary bottom-form__submit"
-            disabled={sending}
-            style={{ opacity: sending ? 0.6 : 1, cursor: sending ? 'not-allowed' : 'pointer' }}
-          >
-            {sending ? '전송 중...' : '무료 상담 신청'}
-          </button>
-        </div>
+        )}
 
         <p
           className="bottom-form__status"
@@ -192,7 +391,7 @@ export default function BottomForm() {
         >
           {message}
         </p>
-      </form>
+      </div>
     </div>
   );
 }

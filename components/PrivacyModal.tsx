@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { OPERATOR } from "@/lib/site";
 
-/** 동의 결과 — 선택 항목은 값이 그대로 전송 페이로드에 실린다 */
+/**
+ * 동의 결과 — 선택 항목은 값이 그대로 전송 페이로드에 실린다.
+ *
+ * marketing(광고성 정보 수신)은 동의 UI 를 화면에서 내렸으므로 항상 false 가 실린다.
+ * 전송 스키마를 유지하기 위해 필드·타입은 그대로 둔다 (consent_marketing).
+ */
 export type ConsentResult = {
   marketing: boolean;
 };
@@ -17,25 +22,33 @@ type Props = {
 /**
  * 폼 제출 시 뜨는 개인정보 동의 모달.
  *   [필수] ① 수집·이용  ② 제3자 제공  ③ (만 14세 미만) 법정대리인 동의
- *   [선택] ④ 광고성 정보 수신 (정보통신망법 제50조 — 올댓뷰티 상담사의 전화·문자 발신 근거)
  * 흐름: 신청 버튼 → 입력검증 → 이 모달 → "동의하고 신청" → onConfirm(전송) → onClose
+ *
+ * ※ 광고성 정보 수신 동의(정보통신망법 제50조)는 2026-10-06 지시로 화면에서 내렸다.
+ *   렌더하지 않으므로 사용자는 볼 수 없고, 전송값 consent_marketing 은 false 로 고정된다.
+ *   되살리려면 ① adAgree state ② allChecked·handleAllAgree 의 adAgree 반영
+ *   ③ 아래 "광고성 정보 수신 동의" ContentBox 주석 ④ onConfirm 의 marketing 값
+ *   네 군데를 되돌리면 된다. 개인정보처리방침 제8조 설명은 그대로 유지되어 있다.
  */
 export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Props) {
   const [priAgree, setPriAgree] = useState(false);
   const [thirdAgree, setThirdAgree] = useState(false);
   const [guardianAgree, setGuardianAgree] = useState(false);
-  const [adAgree, setAdAgree] = useState(false);
+  // 광고성 정보 수신 동의 — 화면에서 내렸으므로 state 도 쓰지 않는다.
+  // 되살릴 때: const [adAgree, setAdAgree] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
   const allRequired = priAgree && thirdAgree && (!isMinor || guardianAgree);
-  const allChecked = allRequired && adAgree;
+  // 선택 동의 항목이 화면에 없으므로 전체 동의 = 필수 전체 동의.
+  // 되살릴 때: const allChecked = allRequired && adAgree;
+  const allChecked = allRequired;
   const primary = "var(--primary)";
 
   const handleAllAgree = () => {
     const next = !allChecked;
     setPriAgree(next);
     setThirdAgree(next);
-    setAdAgree(next);
+    // 되살릴 때: setAdAgree(next);
     if (isMinor) setGuardianAgree(next);
   };
 
@@ -43,7 +56,9 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
     if (!priAgree) { alert("개인정보 수집 및 이용에 동의해 주세요."); return; }
     if (!thirdAgree) { alert("개인정보 제3자 제공에 동의해 주세요."); return; }
     if (isMinor && !guardianAgree) { alert("만 14세 미만은 보호자(법정대리인) 동의가 필요합니다."); return; }
-    onConfirm({ marketing: adAgree });
+    // 광고성 수신 동의 UI 를 받지 않으므로 false 로 고정해서 넘긴다.
+    // 되살릴 때: onConfirm({ marketing: adAgree });
+    onConfirm({ marketing: false });
     onClose();
   };
 
@@ -94,7 +109,9 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
               <div style={{ width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: allChecked ? primary : "#d4d4d8", flexShrink: 0 }}>
                 <svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true"><path d="M1 5L4.5 8.5L11 1.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
-              <span style={{ fontSize: 17, fontWeight: 700, color: allChecked ? primary : "#3f3f46" }}>약관 전체 동의하기 <span style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa" }}>(선택 항목 포함)</span></span>
+              {/* 선택 동의 항목(광고성 수신)을 화면에서 내렸으므로 "(선택 항목 포함)" 꼬리말도 함께 뺀다.
+                  되살릴 때: 약관 전체 동의하기 <span style={{ fontSize: 12, fontWeight: 600, color: "#a1a1aa" }}>(선택 항목 포함)</span> */}
+              <span style={{ fontSize: 17, fontWeight: 700, color: allChecked ? primary : "#3f3f46" }}>약관 전체 동의하기</span>
             </button>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -119,6 +136,11 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
                 ※ {OPERATOR.recipientsListNote}
               </ContentBox>
 
+              {/* ── 광고성 정보 수신 동의 (2026-10-06 지시로 화면에서 제외) ──────────
+                  렌더하지 않으므로 사용자에게 보이지 않고, 전송값은 false 로 고정된다.
+                  아래 블록의 주석을 풀고 adAgree state 를 되살리면 그대로 복구된다.
+                  (처리방침 제8조의 광고성 정보 전송 설명은 그대로 유지한다)
+
               <ContentBox checked={adAgree} onChange={setAdAgree} label="광고성 정보 수신 동의" primary={primary} optional>
                 전송자 : {OPERATOR.adSender}<br />
                 전송 방법 : {OPERATOR.adChannels}<br />
@@ -127,6 +149,7 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
                 ※ <b style={{ color: '#3f3f46' }}>선택 항목입니다.</b> 동의하지 않으셔도 상담 신청은 정상적으로 접수됩니다.<br />
                 ※ 수신 동의는 언제든지 철회하실 수 있으며, 철회 시 광고성 정보 발송이 즉시 중단됩니다.
               </ContentBox>
+              ──────────────────────────────────────────────────────────────── */}
 
               {isMinor && (
                 <ContentBox checked={guardianAgree} onChange={setGuardianAgree} label="만 14세 미만 법정대리인(보호자) 동의" primary={primary}>

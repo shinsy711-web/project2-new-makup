@@ -124,7 +124,9 @@ export default function BottomForm() {
     setShowModal(true);
   };
 
-  const handleConfirm = async (consent: ConsentResult) => {
+  // 광고성 수신 동의 UI 를 화면에서 내렸으므로 동의 결과에서 읽을 값이 없다.
+  // 되살릴 때: (consent: ConsentResult) 로 되돌리고 아래 consent_marketing 을 consent.marketing 으로.
+  const handleConfirm = async (_consent: ConsentResult) => {
     const parsed = parsePhone(form.mobile1, form.mobile2);
     if (typeof parsed === 'string') { fail(parsed); return; }
 
@@ -144,7 +146,8 @@ export default function BottomForm() {
       // ── 동의 이력 ── 본문 폼과 같은 키·같은 버전으로 남긴다
       consent_privacy: true,                 // [필수] 수집·이용
       consent_third_party: true,             // [필수] 제3자 제공
-      consent_marketing: consent.marketing,  // [선택] 광고성 정보 수신
+      // 광고성 정보 수신 동의는 화면에서 제외했으므로 false 고정 (필드는 스키마 유지를 위해 남긴다)
+      consent_marketing: false,              // [제외] 광고성 정보 수신 — 동의 UI 없음
       consent_at: new Date().toISOString(),
       consent_version: CONSENT_VERSION,
 

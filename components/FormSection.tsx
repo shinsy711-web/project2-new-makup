@@ -29,8 +29,9 @@ type Props = {
  * 항목이 늘수록 전환율이 떨어지므로, 어떤 과정에 관심이 있는지는 입력받지 않고
  * `source_page`(유입 페이지)로 갈음한다. 예: /field/semi-permanent/ 유입 = 반영구 관심.
  *
- * 흐름: 신청 클릭 → 입력 검증 → PrivacyModal(수집·이용 / 제3자 제공 / 광고성 / 법정대리인)
+ * 흐름: 신청 클릭 → 입력 검증 → PrivacyModal(수집·이용 / 제3자 제공 / 법정대리인)
  *      → POST(NEXT_PUBLIC_DB_SUBMIT_URL?api_key=...) → 완료 안내
+ * (광고성 정보 수신 동의는 화면에서 제외 — consent_marketing 은 false 고정)
  */
 export default function FormSection({
   cta = "내 조건으로 수강료 견적 받기 (무료)",
@@ -80,7 +81,9 @@ export default function FormSection({
     setShowModal(true);
   };
 
-  const handleConfirm = async (consent: ConsentResult) => {
+  // 광고성 수신 동의 UI 를 화면에서 내렸으므로 동의 결과에서 읽을 값이 없다.
+  // 되살릴 때: (consent: ConsentResult) 로 되돌리고 아래 consent_marketing 을 consent.marketing 으로.
+  const handleConfirm = async (_consent: ConsentResult) => {
     const phoneResult = parsePhone(form.mobile1, form.mobile2);
     if (typeof phoneResult === "string") { alert(phoneResult); return; }
 
@@ -101,7 +104,8 @@ export default function FormSection({
       // 플래그만 남기면 동의 문구가 바뀐 뒤에는 무엇에 동의했는지 특정할 수 없다.
       consent_privacy: true,                 // [필수] 수집·이용
       consent_third_party: true,             // [필수] 제3자 제공
-      consent_marketing: consent.marketing,  // [선택] 광고성 정보 수신
+      // 광고성 정보 수신 동의는 화면에서 제외했으므로 false 고정 (필드는 스키마 유지를 위해 남긴다)
+      consent_marketing: false,              // [제외] 광고성 정보 수신 — 동의 UI 없음
       consent_at: new Date().toISOString(),
       consent_version: CONSENT_VERSION,
 

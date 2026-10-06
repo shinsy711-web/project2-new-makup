@@ -83,9 +83,12 @@ export default function BottomForm() {
       mobile3: '',
       customer_sex: '',
       region: '',
-      has_license: '',
+      // FormSection 은 토글 기본값으로 항상 'N'/'Y' 중 하나를 보낸다.
+      // 바텀폼은 자격증을 묻지 않으므로 같은 기본값('N')을 보내 수신 서버가 같은 값 집합만 받게 한다.
+      has_license: 'N',
       category: '메이크업학원',
-      source_page: pathname || '/',
+      // 본문 폼과 구분해야 어느 쪽에서 들어온 리드인지 DB 에서 갈린다 (project29 와 같은 규칙)
+      source_page: `bottom-form${pathname || '/'}`,
 
       // ── 동의 이력 ── FormSection 과 같은 키·같은 버전으로 남긴다
       consent_privacy: true,

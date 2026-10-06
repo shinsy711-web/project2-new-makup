@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import PrivacyModal, { type ConsentResult } from './PrivacyModal';
 import { validateForm, parsePhone, isUnder14, SPECIAL_CHAR_REG } from '@/lib/validate';
@@ -55,6 +54,11 @@ export default function BottomForm() {
   const [showModal, setShowModal] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
+  // 동의 안내용 체크박스 — 전송 로직과 무관한 순수 UI 상태다.
+  // 클릭 시 같은 PrivacyModal 을 '미리보기'로 띄우고, 끝까지 보고 닫으면 체크 표시만 해 준다.
+  // 실제 동의·전송은 여전히 제출 버튼 → handleSubmit → showModal → handleConfirm 경로로만 이뤄진다.
+  const [showPrivacyPreview, setShowPrivacyPreview] = useState(false);
+  const [privacyPreviewed, setPrivacyPreviewed] = useState(false);
 
   const minor = isUnder14(form.customer_birth);
   const sending = status === 'sending';
@@ -221,7 +225,7 @@ export default function BottomForm() {
                   value={form.customer_name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   maxLength={8}
-                  placeholder="성함"
+                  placeholder="예) 홍길동"
                   autoComplete="name"
                 />
                 <span className="bottom-form__sex" role="group" aria-label="성별">
@@ -253,7 +257,7 @@ export default function BottomForm() {
                   value={form.customer_birth}
                   onChange={(e) => set('customer_birth', e.target.value.replace(/\D/g, ''))}
                   maxLength={6}
-                  placeholder="생년월일 6자리"
+                  placeholder="예) 990101"
                   autoComplete="bday"
                 />
               </div>
@@ -284,7 +288,7 @@ export default function BottomForm() {
                     value={form.mobile2}
                     onChange={(e) => set('mobile2', e.target.value.replace(/\D/g, ''))}
                     maxLength={11}
-                    placeholder="번호 입력"
+                    placeholder="예) 12345678"
                     autoComplete="tel-national"
                   />
                 </div>
@@ -343,7 +347,7 @@ export default function BottomForm() {
                       value={form.guardian_name}
                       onChange={(e) => set('guardian_name', e.target.value)}
                       maxLength={8}
-                      placeholder="보호자 성함"
+                      placeholder="예) 홍길동"
                     />
                   </div>
                 </div>
@@ -358,7 +362,7 @@ export default function BottomForm() {
                       value={form.guardian_phone}
                       onChange={(e) => set('guardian_phone', e.target.value.replace(/\D/g, ''))}
                       maxLength={11}
-                      placeholder="보호자 연락처"
+                      placeholder="예) 01012345678"
                     />
                   </div>
                 </div>
@@ -379,12 +383,29 @@ export default function BottomForm() {
           </form>
         )}
 
+        {/* 동의 문장을 바에 풀어 쓰는 대신, 체크박스 + 짧은 라벨만 보이고
+            클릭하면 기존 PrivacyModal(제출 시 뜨는 동의 모달과 완전히 같은 컴포넌트)을
+            미리보기로 띄운다. 여기서 끝까지 읽고 닫으면 체크 표시만 해 줄 뿐,
+            실제 동의·전송은 여전히 제출 버튼 → handleSubmit → handleConfirm 경로로만 이뤄진다. */}
         {status !== 'done' && (
-          <p className="bottom-form__note">
-            {/* 375px 에서 한 줄에 들어가는 길이로 유지한다 — 두 줄이 되면 바가 17px 높아진다 */}
-            신청 시 개인정보 동의 창이 열립니다 · 100% 무료{' '}
-            <Link href="/privacy-policy/" className="bottom-form__detail">전문 보기</Link>
-          </p>
+          <label className="bottom-form__consent">
+            <input
+              type="checkbox"
+              className="bottom-form__consent-checkbox"
+              checked={privacyPreviewed}
+              onChange={() => {}}
+              onClick={(e) => { e.preventDefault(); setShowPrivacyPreview(true); }}
+            />
+            <span className="bottom-form__consent-label">[필수] 개인정보 동의</span>
+          </label>
+        )}
+
+        {showPrivacyPreview && (
+          <PrivacyModal
+            isMinor={minor}
+            onConfirm={() => { setPrivacyPreviewed(true); setShowPrivacyPreview(false); }}
+            onClose={() => setShowPrivacyPreview(false)}
+          />
         )}
 
         <p

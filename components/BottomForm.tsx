@@ -54,11 +54,6 @@ export default function BottomForm() {
   const [showModal, setShowModal] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
-  // 동의 안내용 체크박스 — 전송 로직과 무관한 순수 UI 상태다.
-  // 클릭 시 같은 PrivacyModal 을 '미리보기'로 띄우고, 끝까지 보고 닫으면 체크 표시만 해 준다.
-  // 실제 동의·전송은 여전히 제출 버튼 → handleSubmit → showModal → handleConfirm 경로로만 이뤄진다.
-  const [showPrivacyPreview, setShowPrivacyPreview] = useState(false);
-  const [privacyPreviewed, setPrivacyPreviewed] = useState(false);
 
   const minor = isUnder14(form.customer_birth);
   const sending = status === 'sending';
@@ -383,31 +378,7 @@ export default function BottomForm() {
           </form>
         )}
 
-        {/* 동의 문장을 바에 풀어 쓰는 대신, 체크박스 + 짧은 라벨만 보이고
-            클릭하면 기존 PrivacyModal(제출 시 뜨는 동의 모달과 완전히 같은 컴포넌트)을
-            미리보기로 띄운다. 여기서 끝까지 읽고 닫으면 체크 표시만 해 줄 뿐,
-            실제 동의·전송은 여전히 제출 버튼 → handleSubmit → handleConfirm 경로로만 이뤄진다. */}
-        {status !== 'done' && (
-          <label className="bottom-form__consent">
-            <input
-              type="checkbox"
-              className="bottom-form__consent-checkbox"
-              checked={privacyPreviewed}
-              onChange={() => {}}
-              onClick={(e) => { e.preventDefault(); setShowPrivacyPreview(true); }}
-            />
-            <span className="bottom-form__consent-label">[필수] 개인정보 동의</span>
-          </label>
-        )}
-
-        {showPrivacyPreview && (
-          <PrivacyModal
-            isMinor={minor}
-            onConfirm={() => { setPrivacyPreviewed(true); setShowPrivacyPreview(false); }}
-            onClose={() => setShowPrivacyPreview(false)}
-          />
-        )}
-
+        {/* 동의 체크 줄은 숨겼다. 제출 버튼을 누르면 동의 모달(handleConfirm 경로)이 뜬다. */}
         <p
           className="bottom-form__status"
           aria-live="polite"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { OPERATOR } from "@/lib/site";
 
 /**
@@ -62,7 +63,8 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
     onClose();
   };
 
-  return (
+  // 바텀폼(backdrop-filter)·폼 섹션 안에서 열려도 갇히지 않도록 body 로 띄운다.
+  return createPortal(
     <>
       <div
         role="dialog"
@@ -206,7 +208,8 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
 

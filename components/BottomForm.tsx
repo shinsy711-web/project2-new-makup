@@ -47,9 +47,13 @@ const INITIAL = {
  * 레이아웃은 globals.css 의 .bottom-form* 규칙이 담당한다
  * (z-index 45, 모바일 2열 격자 / 900px 이상 한 줄, body 하단 여백).
  */
+/** 이 거리(px) 이상 스크롤해야 바텀폼이 올라온다 */
+const SHOW_AFTER = 300;
+
 export default function BottomForm() {
   const pathname = usePathname();
   const barRef = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
   const [form, setForm] = useState(INITIAL);
   const [showModal, setShowModal] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
@@ -77,6 +81,29 @@ export default function BottomForm() {
       ro.disconnect();
       window.removeEventListener('resize', apply);
       document.documentElement.style.removeProperty('--bottom-form-h');
+    };
+  }, []);
+
+  // 처음엔 화면 아래에 숨겨 두고, SHOW_AFTER(px) 이상 스크롤하면 올라온다. 맨 위로 돌아가면 다시 내려간다.
+  // 단, 한 번이라도 바 안에 입력을 시작했으면 계속 띄워 둔다(입력·동의 모달·전송 결과 확인 중 사라지지 않게).
+  // 스크롤할 거리가 SHOW_AFTER 보다 짧은 페이지는 처음부터 보여준다.
+  useEffect(() => {
+    const bar = barRef.current
+    if (!bar) return;
+    let pinned = false;
+    const update = () => {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      setShown(pinned || scrollable < SHOW_AFTER || window.scrollY > SHOW_AFTER);
+    };
+    const pin = () => { pinned = true; update(); };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    bar.addEventListener('focusin', pin);
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      bar.removeEventListener('focusin', pin);
     };
   }, []);
 
@@ -184,7 +211,7 @@ export default function BottomForm() {
     status === 'error' ? '#B45309' : status === 'done' ? 'var(--success)' : 'var(--text-secondary)';
 
   return (
-    <div className="bottom-form" ref={barRef}>
+    <div className={`bottom-form${shown ? ' is-shown' : ''}`} ref={barRef}>
       {showModal && (
         <PrivacyModal onConfirm={handleConfirm} onClose={() => setShowModal(false)} isMinor={minor} />
       )}

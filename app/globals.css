@@ -310,3 +310,26 @@ body { padding-bottom: var(--bottom-form-h, 206px); }
   .bottom-form__guardian-note { flex: 0 1 auto; }
   .bottom-form__guardian .bottom-form__cell { flex: 0 1 200px; }
 }
+
+/* 바텀폼 등장 — 처음엔 화면 아래로 숨겨 두고(포커스도 안 가게 visibility),
+   BottomForm 이 스크롤 위치를 보고 .is-shown 을 붙이면 아래에서 올라온다. */
+.bottom-form {
+  transform: translateY(calc(100% + 48px)); visibility: hidden;
+  transition: transform 0.35s ease, visibility 0s linear 0.35s;
+}
+.bottom-form.is-shown {
+  transform: none; visibility: visible;
+  transition: transform 0.35s ease;
+}
+
+/* 모바일 — 입력칸은 그대로 다 보이되 칸 높이를 줄이고,
+   화면 가장자리에서 8px 띄운 둥근 카드로 납작하게 띄운다. */
+@media (max-width: 899px) {
+  .bottom-form {
+    left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    border: 1px solid var(--border-color); border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(36,26,43,0.18);
+    padding: 8px;
+  }
+  .bottom-form__box, .bottom-form__submit { height: 36px; }
+}

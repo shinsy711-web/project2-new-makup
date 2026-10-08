@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import PrivacyModal, { type ConsentResult } from './PrivacyModal';
-import { validateForm, parsePhone, isUnder14, SPECIAL_CHAR_REG } from '@/lib/validate';
+import { validateForm, parsePhone, isUnder14, SPECIAL_CHAR_REG, cleanMobile2 } from '@/lib/validate';
 import { REGIONS } from '@/data/constants';
 import { CONSENT_VERSION } from '@/lib/site';
 
@@ -308,8 +308,7 @@ export default function BottomForm() {
                     type="tel"
                     inputMode="numeric"
                     value={form.mobile2}
-                    onChange={(e) => set('mobile2', e.target.value.replace(/\D/g, ''))}
-                    maxLength={11}
+                    onChange={(e) => set('mobile2', cleanMobile2(e.target.value))}
                     placeholder="예) 12345678"
                     autoComplete="tel-national"
                   />

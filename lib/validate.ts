@@ -71,3 +71,12 @@ export function isUnder14(birth: string): boolean {
   if (today.getMonth() + 1 < mm || (today.getMonth() + 1 === mm && today.getDate() < dd)) age--;
   return age < 14;
 }
+
+/**
+ * 연락처 뒷자리(mobile2) 입력값 정리 — 숫자만, 최대 8자리까지만 받는다.
+ * 010 까지 붙은 전체 번호를 붙여 넣으면 앞 3자리를 떼고 뒤 8자리만 남긴다.
+ */
+export function cleanMobile2(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  return (digits.length > 8 && /^01[016789]/.test(digits) ? digits.slice(3) : digits).slice(0, 8);
+}

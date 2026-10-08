@@ -54,6 +54,8 @@ export default function BottomForm() {
   const pathname = usePathname();
   const barRef = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
+  // 모바일에서만 쓰는 접힘 상태 — 처음엔 한 줄짜리 신청 바만 보이고, 누르면 입력칸이 펼쳐진다.
+  const [open, setOpen] = useState(false);
   const [form, setForm] = useState(INITIAL);
   const [showModal, setShowModal] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
@@ -211,7 +213,13 @@ export default function BottomForm() {
     status === 'error' ? '#B45309' : status === 'done' ? 'var(--success)' : 'var(--text-secondary)';
 
   return (
-    <div className={`bottom-form${shown ? ' is-shown' : ''}`} ref={barRef}>
+    <div className={`bottom-form${shown ? ' is-shown' : ''}${open ? ' is-open' : ''}`} ref={barRef}>
+  {/* 모바일 전용 접기/펼치기 바 (PC 에서는 CSS 로 숨기고 입력칸을 항상 보인다) */}
+  <button type="button" className="bf-toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+    <span className="bf-toggle__eyebrow">무료</span>
+    <span className="bf-toggle__text">1:1 상담 신청하기</span>
+    <span className="bf-toggle__icon" aria-hidden="true">{open ? '▼' : '▲'}</span>
+  </button>
       {showModal && (
         <PrivacyModal onConfirm={handleConfirm} onClose={() => setShowModal(false)} isMinor={minor} />
       )}

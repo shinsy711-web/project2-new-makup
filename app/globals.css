@@ -333,3 +333,26 @@ body { padding-bottom: var(--bottom-form-h, 206px); }
   }
   .bottom-form__box, .bottom-form__submit { height: 36px; }
 }
+
+/* 모바일 접힌 바 — 처음엔 한 줄짜리 신청 바만 띄우고, 누르면(.is-open) 입력칸이 펼쳐진다.
+   PC 에서는 토글을 숨기고 입력칸을 항상 보인다. */
+.bf-toggle { display: none; }
+@media (max-width: 899px) {
+  .bf-toggle {
+    display: flex; align-items: center; gap: 8px; width: 100%; height: 44px; padding: 0 14px;
+    border: none; border-radius: 14px; cursor: pointer;
+    background: var(--primary); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 900; letter-spacing: -0.02em;
+  }
+  .bf-toggle__eyebrow {
+    font-size: 10px; font-weight: 900; letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.22); padding: 3px 8px; border-radius: 50px;
+  }
+  .bf-toggle__text { flex: 1; text-align: left; }
+  .bf-toggle__icon { font-size: 11px; opacity: 0.9; }
+  .bottom-form.is-open .bf-toggle { height: 32px; background: transparent; color: var(--text-primary); padding: 0 6px; }
+  .bottom-form.is-open .bf-toggle__eyebrow { background: var(--primary-light); color: var(--primary); }
+  .bottom-form.is-open .bf-toggle__icon { color: var(--text-muted); }
+  .bottom-form:not(.is-open) .bottom-form__inner { display: none; }
+  .bottom-form.is-open .bf-toggle { margin-bottom: 6px; }
+}

@@ -20,7 +20,6 @@ const INITIAL = {
   mobile2: '',
   customer_sex: '2',
   region: '',
-  has_license: 'N',
   guardian_name: '',
   guardian_phone: '',
 };
@@ -29,7 +28,7 @@ const INITIAL = {
  * ★ 화면 하단 고정 바텀폼 — app/layout.tsx 에서 전역 마운트되어 모든 페이지에 노출된다.
  *
  * 받는 항목은 본문 폼(components/FormSection.tsx)과 1:1 로 같다.
- *   성함 · 성별 · 생년월일 · 연락처(앞자리+번호) · 희망 지역 · 자격증 보유 여부
+ *   성함 · 성별 · 생년월일 · 연락처(앞자리+번호) · 희망 지역
  *   (+ 만 14세 미만일 때만 보호자 성함 · 보호자 연락처)
  * 본문 폼에 없는 항목은 만들지 않고, 사용자가 입력하지 않은 값을 빈 문자열로
  * 채워 보내지도 않는다. 모든 칸은 접지 않고 처음부터 화면에 보인다.
@@ -164,7 +163,6 @@ export default function BottomForm() {
       mobile3: '',
       customer_sex: form.customer_sex,
       region: form.region,
-      has_license: form.has_license,
       category: '메이크업학원',
       // 본문 폼과 구분해야 어느 쪽에서 들어온 리드인지 DB 에서 갈린다 (project29 와 같은 규칙)
       source_page: `bottom-form${pathname || '/'}`,
@@ -330,25 +328,6 @@ export default function BottomForm() {
                   {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
                 <span className="bottom-form__caret" aria-hidden="true">▼</span>
-              </div>
-            </div>
-
-            {/* 자격증 보유 여부 — 본문 폼과 같은 'Y' / 'N' 값 */}
-            <div className="bottom-form__cell bottom-form__cell--license">
-              <div className="bottom-form__box">
-                <span className="bottom-form__boxlabel" aria-hidden="true">자격증</span>
-                <button
-                  type="button"
-                  className="bottom-form__switch"
-                  onClick={() => set('has_license', form.has_license === 'Y' ? 'N' : 'Y')}
-                  aria-pressed={form.has_license === 'Y'}
-                  aria-label="미용사(메이크업) 자격증 보유 여부"
-                >
-                  <span className="bottom-form__switch-text">{form.has_license === 'Y' ? '보유' : '없음'}</span>
-                  <span className="bottom-form__track" aria-hidden="true">
-                    <span className="bottom-form__knob" />
-                  </span>
-                </button>
               </div>
             </div>
 

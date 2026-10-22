@@ -24,8 +24,8 @@ type Props = {
 /**
  * ★ DB 수집 폼 — 모든 페이지 최상단(H1 바로 아래)에 배치되는 핵심 컴포넌트.
  *
- * 입력 항목은 project23 과 동일한 5가지로 유지한다.
- *   성함(+성별) · 생년월일 · 연락처 · 희망 지역 · 자격증 보유 여부
+ * 입력 항목은 4가지로 유지한다. (자격증 보유 여부는 2026-10-22 제거)
+ *   성함(+성별) · 생년월일 · 연락처 · 희망 지역
  * 항목이 늘수록 전환율이 떨어지므로, 어떤 과정에 관심이 있는지는 입력받지 않고
  * `source_page`(유입 페이지)로 갈음한다. 예: /field/semi-permanent/ 유입 = 반영구 관심.
  *
@@ -49,7 +49,6 @@ export default function FormSection({
     mobile2: "",
     customer_sex: "2",
     region: defaultRegion ?? "",
-    has_license: "N",
     guardian_name: "",
     guardian_phone: "",
   };
@@ -95,7 +94,6 @@ export default function FormSection({
       mobile3: "",
       customer_sex: form.customer_sex,
       region: form.region,
-      has_license: form.has_license,
       category: "메이크업학원",
       source_page: sourcePage,
 
@@ -286,34 +284,6 @@ export default function FormSection({
                   </select>
                   {caret(18)}
                 </div>
-              </div>
-            </div>
-
-            {/* 자격증 보유 여부 — 토글 */}
-            <div style={groupStyle}>
-              <span style={labelStyle}>자격증 보유 여부</span>
-              <div style={wrapStyle("license")}>
-                <span style={{ flex: 1, color: "var(--text-secondary)", fontSize: 15 }}>
-                  미용사(메이크업) 자격증 보유 여부
-                </span>
-                <button
-                  type="button"
-                  onClick={() => set("has_license", form.has_license === "Y" ? "N" : "Y")}
-                  aria-pressed={form.has_license === "Y"}
-                  aria-label="미용사(메이크업) 자격증 보유 여부"
-                  style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", flexShrink: 0, padding: 0 }}
-                >
-                  <span style={{ fontSize: 13, fontWeight: 700, width: 32, textAlign: "right", transition: "color 0.2s", color: form.has_license === "Y" ? "var(--primary)" : "var(--text-muted)" }}>
-                    {form.has_license === "Y" ? "보유" : "없음"}
-                  </span>
-                  <span style={{ position: "relative", width: 44, height: 24, borderRadius: 12, transition: "background 0.3s", background: form.has_license === "Y" ? "var(--primary)" : "var(--border-color)", display: "block" }}>
-                    <span style={{
-                      position: "absolute", top: 3, left: 3, width: 18, height: 18, borderRadius: "50%", background: "white",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.2)", transition: "transform 0.3s ease", display: "block",
-                      transform: form.has_license === "Y" ? "translateX(20px)" : "translateX(0)",
-                    }} />
-                  </span>
-                </button>
               </div>
             </div>
 

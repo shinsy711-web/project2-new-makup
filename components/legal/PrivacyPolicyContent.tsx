@@ -45,7 +45,7 @@ export default function PrivacyPolicyContent() {
         회사는 서비스 제공에 필요한 최소한의 개인정보를 수집합니다.<br /><br />
         <b>서비스명:</b> 메이크업학원 수강료 비교 및 상담 안내 서비스<br />
         <b>필수수집항목:</b> 성명, 휴대폰 번호, 생년월일, 성별, 희망 지역<br />
-        <b>선택수집항목:</b> 미용사(메이크업) 자격증 보유 여부, 광고성 정보 수신 동의 여부<br />
+        <b>선택수집항목:</b> 광고성 정보 수신 동의 여부<br />
         <b>만 14세 미만 추가:</b> 법정대리인 성명·연락처<br />
         <b>자동수집항목:</b> IP Address, 참여일시, 유입경로, 서비스 이용기록, 브라우저 정보
       </Section>
@@ -65,7 +65,7 @@ export default function PrivacyPolicyContent() {
         회사는 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않으며, 다음의 경우에만 제공합니다.<br /><br />
         <b>제공받는 자:</b> {OPERATOR.recipients}<br />
         <b>제공 목적:</b> 수강료 견적 안내, 과정 추천 및 1:1 상담 진행<br />
-        <b>제공 항목:</b> 성명, 휴대폰 번호, 생년월일, 성별, 희망 지역, 미용사(메이크업) 자격증 보유 여부<br />
+        <b>제공 항목:</b> 성명, 휴대폰 번호, 생년월일, 성별, 희망 지역<br />
         <b>보유 및 이용기간:</b> 제공받는 자의 상담 목적 달성 시까지<br /><br />
         ※ {OPERATOR.recipientsScope}<br />
         ※ <b>{OPERATOR.recipientsSpecify}</b><br />

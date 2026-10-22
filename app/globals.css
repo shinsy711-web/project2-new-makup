@@ -275,9 +275,8 @@ body { padding-bottom: var(--bottom-form-h, 206px); }
   grid-column: 1 / -1; margin: 0;
   font-size: 11.5px; font-weight: 700; color: var(--primary); line-height: 1.5;
 }
-/* 보호자 줄이 2열을 모두 쓰므로, 그 앞뒤 칸도 한 줄씩 차지해 빈 칸이 남지 않게 한다 */
-.bottom-form__grid--minor .bottom-form__cell--license,
-.bottom-form__grid--minor .bottom-form__cell--submit { grid-column: 1 / -1; }
+/* 2열 그리드에서 칸이 홀수(이름·생년월일·연락처·지역 + 제출)이므로 제출 버튼은 한 줄을 다 쓴다 */
+.bottom-form__cell--submit { grid-column: 1 / -1; }
 
 /* 동의 체크박스 — 동의 문장을 바에 풀어 쓰지 않고 체크박스 + 짧은 라벨만 보인다.
    클릭하면 제출 시와 같은 PrivacyModal 이 그대로 뜬다(모달 내용은 건드리지 않는다). */
@@ -302,7 +301,6 @@ body { padding-bottom: var(--bottom-form-h, 206px); }
   .bottom-form__cell--birth { flex: 0 1 126px; }
   .bottom-form__cell--phone { flex: 1 1 200px; }
   .bottom-form__cell--region { flex: 0 1 118px; }
-  .bottom-form__cell--license { flex: 0 1 150px; }
   .bottom-form__cell--submit { flex: 0 0 auto; }
   .bottom-form__submit { width: auto; padding: 0 30px; font-size: 15.5px; }
   /* 보호자 줄만 둘째 줄로 내린다 */

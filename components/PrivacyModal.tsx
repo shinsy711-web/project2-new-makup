@@ -120,7 +120,7 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
               <ContentBox checked={priAgree} onChange={setPriAgree} label="개인정보 수집 및 이용 동의" primary={primary}>
                 수집 주체 : {OPERATOR.company}<br />
                 수집 목적 : 메이크업학원 수강료 안내, 과정 추천 및 1:1 상담 제공<br />
-                수집 항목 : 성명, 휴대폰 번호, 생년월일, 성별, 희망 지역, 미용사(메이크업) 자격증 보유 여부 (만 14세 미만: 보호자 성명·연락처)<br />
+                수집 항목 : 성명, 휴대폰 번호, 생년월일, 성별, 희망 지역 (만 14세 미만: 보호자 성명·연락처)<br />
                 보유 기간 : 수집일로부터 1년 (또는 요청 시 즉시 파기)<br />
                 동의 거부 권리 : 동의를 거부하실 권리가 있으나, 거부 시 상담 신청이 제한될 수 있습니다.
               </ContentBox>
@@ -130,7 +130,7 @@ export default function PrivacyModal({ onConfirm, onClose, isMinor = false }: Pr
                 {/* 제공 시점에 상호를 특정한다는 고지가 이 항목의 핵심이므로 스크롤 없이 보이는 위치에 둔다 */}
                 <b style={{ color: '#3f3f46' }}>※ {OPERATOR.recipientsSpecify}</b><br />
                 제공 목적 : 수강료 견적 안내, 과정 상담 및 개강 일정 안내<br />
-                제공 항목 : 성명, 휴대폰 번호, 생년월일, 성별, 희망 지역, 미용사(메이크업) 자격증 보유 여부<br />
+                제공 항목 : 성명, 휴대폰 번호, 생년월일, 성별, 희망 지역<br />
                 보유 기간 : 제공받는 자의 상담 목적 달성 시 즉시 파기<br />
                 동의 거부 권리 : 거부하실 수 있으며, 거부 시 상담 연결이 제한될 수 있습니다.<br />
                 <br />
